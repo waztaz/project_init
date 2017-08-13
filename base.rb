@@ -7,30 +7,18 @@ class Base
   include HTTParty
 
   RAW_JSON = "raw_json=1".freeze
+  CREDENTIALS_FILE = 'credentials.json'.freeze
+  USER_AGENT = 'UneebTest/1.0 (Mac OSX)'.freeze
 
   def initialize
-    credentials = JSON.parse(File.read('credentials.json'))
-    self.class.base_uri "https://www.reddit.com"
-    encoding = Base64.encode64("#{credentials['client_id']}:#{credentials['client_secret']}")
-    user_agent = 'UneebTest/1.0 (Mac OSX)'
-    auth_options = {
-      body: {
-        "grant_type" => "password",
-        "username" => credentials["username"],
-        "password" => credentials["password"]
-      },
-      headers: {
-        "User-Agent" => user_agent,
-        "Content-Type" => "application/x-www-form-urlencoded",
-        "Authorization" => "Basic " + encoding
-      }
-    }
-    get_token(auth_options)
-
+    @credentials = get_credentials_from_file 
+    # acquire the token to talk to the authenticated API
+    acquire_token
+    # set the base URI to the authenticated site
     self.class.base_uri "https://oauth.reddit.com"
     @options = {
       headers: {
-        "User-Agent" => user_agent,
+        "User-Agent" => USER_AGENT,
         "Authorization" => "Bearer " + @access_token
       }
     }
@@ -77,9 +65,33 @@ class Base
     response = self.class.get("/r/#{subreddit}/hot", options).parsed_response
   end
 
+  private
+
+  def acquire_token
+    self.class.base_uri "https://www.reddit.com"
+    encoding = Base64.encode64("#{@credentials['client_id']}:#{@credentials['client_secret']}")
+    auth_options = {
+      body: {
+        "grant_type" => "password",
+        "username" => @credentials["username"],
+        "password" => @credentials["password"]
+      },
+      headers: {
+        "User-Agent" => USER_AGENT,
+        "Content-Type" => "application/x-www-form-urlencoded",
+        "Authorization" => "Basic " + encoding
+      }
+    }
+    @access_token = get_token(auth_options)
+  end
+
   def get_token(options)
     response = self.class.post('/api/v1/access_token', options)
-    @access_token = response["access_token"]
+    response["access_token"]
+  end
+
+  def get_credentials_from_file
+    JSON.parse(File.read(CREDENTIALS_FILE))
   end
 
 end
