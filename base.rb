@@ -3,6 +3,24 @@ require 'httparty'
 require 'pry'
 require 'json'
 
+class Link
+  attr_accessor :title
+  attr_accessor :name
+  attr_accessor :id
+  attr_accessor :view_count
+  attr_accessor :permalink
+  attr_accessor :created
+
+  def initialize args
+    @title ||= args["title"]
+    @name ||= args["name"]
+    @id ||= args["id"]
+    @view_count ||= args["view_count"]
+    @permalink ||= args["permalink"]
+    @created ||= args["created"]
+  end
+end
+
 class Base
   include HTTParty
 
@@ -16,7 +34,7 @@ class Base
     acquire_token
     # set the base URI to the authenticated site
     self.class.base_uri "https://oauth.reddit.com"
-    @options = {
+    @default_options = {
       headers: {
         "User-Agent" => USER_AGENT,
         "Authorization" => "Bearer " + @access_token
@@ -24,13 +42,73 @@ class Base
     }
   end
 
+  def get_request url, options
+    options.merge!(@default_options)
+    response = self.class.get(url, options)
+    # converts the HTTParty response to a hash
+    response.parsed_response
+  end
+
+  def get_subreddit_hot subreddit, count=0
+    opts = {query: {"count" => count.to_s}}
+    url = "/r/#{subreddit}/hot"
+    get_request url, opts
+  end
+
+  def print_all_news_today
+    url = "/r/worldnews/hot"
+    all_titles = get_listing_children url, nil, []
+    binding.pry
+    all_titles
+  end
+
+  # TODO pass a block here to execute a method on data
+  def get_listing_children url, after, all_links
+    opts = {query: {"t" => "day", "count" => "25", "after" => after}}
+    response = get_request url, opts
+    if response["kind"] == "Listing"
+      data = response["data"]
+      before = data["before"]
+      after = data["after"]
+      children = data["children"]
+      if children.length == 25
+        last_loop = false
+      else
+        last_loop = true
+      end
+      children.each do |child|
+        if child["kind"] == "t3"
+          link = Link.new(child["data"])
+          all_links << link 
+        else
+          raise "Expected a link"
+        end
+      end
+      if last_loop
+        return all_links
+      else
+        get_listing_children url, after, all_links
+      end
+    else
+      raise "Expected a listing"
+    end 
+  end
+  
+  def print_top_ten_news_today
+    allnews = get_subreddit_hot "worldnews", 10
+    allnews["data"]["children"].each do |news|
+      puts news["data"]["title"]
+    end
+  end
+
   def get_myself
-    self.class.get("/api/v1/me", @options)
+    self.class.get("/api/v1/me", @default_options)
   end
 
   def get_all_top_listings
-    options = @options.merge({query: {"t" => "day", "limit" => "1"}})
-    response = self.class.get("/r/the_Donald/top", options).parsed_response
+    opts = {query: {"t" => "day", "limit" => "1"}}
+    response = get_request "/r/the_Donald/top", opts
+    response = response.parsed_response
     all_articles = response["data"]["children"]
     all_articles.each do |article|
       kind = article["kind"]
@@ -39,7 +117,7 @@ class Base
       title = article["data"]["title"]
       puts full_id
       puts title
-      options = @options.merge(
+      options = @default_options.merge(
         {query: {
           "article" => id,
           "context" => "8",
@@ -58,11 +136,6 @@ class Base
         puts "------------ENDCOMMENT"
       end
     end
-  end
-
-  def get_subreddit_hot subreddit, count
-    options = @options.merge({query: {"count" => count.to_s}})
-    response = self.class.get("/r/#{subreddit}/hot", options).parsed_response
   end
 
   private
