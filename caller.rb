@@ -1,4 +1,7 @@
-require_relative 'base'
+require 'json'
+require_relative 'node'
 
-# Base.new.print_top_ten_news_today
-Base.new.print_all_news_today
+tree = RedditTree.new
+tree_of_comments = tree.construct_structure
+tree.print_in_order tree.root
+require 'pry'; binding.pry

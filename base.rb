@@ -3,23 +3,8 @@ require 'httparty'
 require 'pry'
 require 'json'
 
-class Link
-  attr_accessor :title
-  attr_accessor :name
-  attr_accessor :id
-  attr_accessor :view_count
-  attr_accessor :permalink
-  attr_accessor :created
-
-  def initialize args
-    @title ||= args["title"]
-    @name ||= args["name"]
-    @id ||= args["id"]
-    @view_count ||= args["view_count"]
-    @permalink ||= args["permalink"]
-    @created ||= args["created"]
-  end
-end
+require_relative 'link'
+require_relative 'comment'
 
 class Base
   include HTTParty
@@ -55,11 +40,55 @@ class Base
     get_request url, opts
   end
 
-  def print_all_news_today
-    url = "/r/worldnews/hot"
-    all_titles = get_listing_children url, nil, []
-    binding.pry
-    all_titles
+  def all_news_today
+    url = "/r/worldnews/top"
+    all_news = get_listing_children url, nil, []
+    all_news
+  end
+
+  def comment_tree id, depth=nil, limit=nil, sort="top"
+    url = "/r/worldnews/comments/#{id}"
+    comment = nil
+    showmore = false
+    opts = {query: {
+      "comment" => comment, 
+      "depth" => depth, 
+      "sort" => sort, 
+      "showmore" => showmore,
+      "limit" => limit
+    }}
+    get_request url, opts
+  end
+
+  # @return [Comment]
+  def get_all_comments id, limit=nil
+    response = comment_tree(id, 1, limit)
+    root_comments = response[1]
+    if root_comments["kind"] == "Listing"
+      data = root_comments["data"]
+      before = data["before"]
+      after = data["after"]
+      children = data["children"]
+      comments = []
+      children.each do |child|
+        child_data = child["data"]
+        comments << Comment.new(child_data)
+      end
+      return comments
+    else
+      raise "Expected a Listing"
+    end
+  end
+
+  def morechildren
+    url = "/api/morechildren"
+    api_type = nil 
+    children = nil
+    id = nil
+    link_id = nil
+    sort = nil
+    opts = {query: {"api_type" => api_type, "children" => children, "id" => id, "link_id" => link_id, "sort" => sort}}
+    get_request url, opts
   end
 
   # TODO pass a block here to execute a method on data
