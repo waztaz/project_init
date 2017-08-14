@@ -31,6 +31,9 @@ class Base
     options.merge!(@default_options)
     response = self.class.get(url, options)
     # converts the HTTParty response to a hash
+    if response.code == 404
+      raise StandardError.new("Not found!")
+    end
     response.parsed_response
   end
 
@@ -46,9 +49,8 @@ class Base
     all_news
   end
 
-  def comment_tree id, depth=nil, limit=nil, sort="top"
+  def comment_tree id, depth=nil, limit=nil, sort="top", comment=nil
     url = "/r/worldnews/comments/#{id}"
-    comment = nil
     showmore = false
     opts = {query: {
       "comment" => comment, 
@@ -60,26 +62,39 @@ class Base
     get_request url, opts
   end
 
-  # @return [Comment]
-  def get_all_comments id, limit=nil
-    response = comment_tree(id, 1, limit)
+  # returns [CommentTree]
+  def get_all_comments id, depth=1, limit=nil, comment=nil
+    response = comment_tree(id, depth, limit, "top", comment)
     root_comments = response[1]
     if root_comments["kind"] == "Listing"
-      data = root_comments["data"]
-      before = data["before"]
-      after = data["after"]
-      children = data["children"]
-      comments = []
-      children.each do |child|
-        child_data = child["data"]
-        comments << Comment.new(child_data)
+      comments = root_comments["data"]["children"]
+      comment_trees = []
+      comments.each do |comment|
+        comment_trees << construct_tree_of_comments(depth, comment)
       end
-      return comments
+      comment_trees
     else
       raise "Expected a Listing"
     end
   end
 
+  def construct_tree_of_comments depth, root
+    depth_check = root["data"]["replies"]
+    if depth == 1 || depth_check.empty?
+      args = {comment: Comment.new(root["data"]), replies: nil}
+      return CommentTree.new(args)
+    else
+      # TODO check if Listing
+      replies = root["data"]["replies"]["data"]["children"]
+      children = []
+      replies.each do |reply|
+        children << construct_tree_of_comments(depth-1,reply)
+      end
+      args = {comment: Comment.new(root["data"]), replies: children}
+      return CommentTree.new(args)
+    end
+  end
+      
   def morechildren
     url = "/api/morechildren"
     api_type = nil 

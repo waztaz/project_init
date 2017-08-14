@@ -22,6 +22,17 @@ class Node
     @children_nodes << child
   end
 
+  def to_custom_json
+    if @children_nodes.empty?
+      return {name: @fullname, score: @score}
+    end
+    children_json = []
+    @children_nodes.each do |child_node|
+      as_json = child_node.to_custom_json
+      children_json << as_json
+    end
+    return {name: @fullname, score: @score, children: children_json}
+  end
 end
 
 class RedditTree
@@ -49,18 +60,38 @@ class RedditTree
     all_links = @root.children_nodes
     all_links.each do |child_link_node|
       id = convert_fullname_to_id child_link_node.fullname
-      x = @client.get_all_comments id, 10
-      x.each do |comment|
-        comment_opts = {
-          "fullname" => comment.name, 
-          "score" => comment.score,
-          "children_nodes" => []
-        }
-        comment_node = Node.new(comment_opts)
-        child_link_node.append_child(comment_node)
+      comments_tree = @client.get_all_comments id, 4, 10
+      comments_tree.each do |comment_tree|
+        node_tree = convert_comment_tree_to_node_tree(comment_tree)
+        child_link_node.append_child(node_tree)
       end
     end
     @root
+  end
+
+  def convert_comment_tree_to_node_tree comment_tree
+    if comment_tree.replies.nil?
+      comment = comment_tree.comment
+      opts = {
+        "fullname" => comment.name,
+        "score" => comment.score,
+        "children_nodes" => []
+      }
+      return Node.new(opts)
+    else
+      children_comments = comment_tree.replies
+      comment = comment_tree.comment
+      children_nodes = []
+      children_comments.each do |child_comment|
+        children_nodes << convert_comment_tree_to_node_tree(child_comment)
+      end
+      opts = {
+        "fullname" => comment.name,
+        "score" => comment.score,
+        "children_nodes" => children_nodes
+      }
+      return Node.new(opts)
+    end
   end
 
   def print_in_order node

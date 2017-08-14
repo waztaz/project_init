@@ -23,3 +23,17 @@ class Comment
     @depth ||= args["depth"]
   end
 end
+
+class CommentTree
+  attr_accessor :replies
+  attr_accessor :comment
+
+  def initialize args
+    @comment ||= args[:comment]
+    @replies ||= args[:replies]
+  end
+
+  def add_reply reply
+    replies << reply
+  end
+end
