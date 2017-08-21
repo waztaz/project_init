@@ -121,7 +121,6 @@ class Base
       children.each do |child|
         if child["kind"] == "t3"
           link = Link.new(child["data"])
-          require 'pry'; binding.pry
           all_links << link 
         else
           raise "Expected a link"
