@@ -37,6 +37,10 @@ end
 
 class RedditTree
   attr_accessor :root
+  
+  NUMBER_OF_ARTICLES = 5.freeze
+  COMMENTS_LIMIT = 10.freeze
+  COMMENTS_DEPTH = 4.freeze
 
   def initialize
     @client = Base.new
@@ -44,11 +48,8 @@ class RedditTree
   end
 
   def construct_structure
-    count = 0
-    get_all_news_lists = @client.all_news_today
+    get_all_news_lists = @client.top_news_today NUMBER_OF_ARTICLES
     get_all_news_lists.each do |news|
-      count += 1
-      break if count > 10
       opts = {
         "fullname" => news.name, 
         "score" => news.score,
@@ -60,7 +61,7 @@ class RedditTree
     all_links = @root.children_nodes
     all_links.each do |child_link_node|
       id = convert_fullname_to_id child_link_node.fullname
-      comments_tree = @client.get_all_comments id, 4, 10
+      comments_tree = @client.get_all_comments id, COMMENTS_DEPTH, COMMENTS_LIMIT
       comments_tree.each do |comment_tree|
         node_tree = convert_comment_tree_to_node_tree(comment_tree)
         child_link_node.append_child(node_tree)

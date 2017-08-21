@@ -49,6 +49,12 @@ class Base
     all_news
   end
 
+  def top_news_today n=5
+    url = "/r/worldnews/top"
+    all_news = get_listing_children url, nil, [], n
+    all_news[0..n-1]
+  end
+
   def comment_tree id, depth=nil, limit=nil, sort="top", comment=nil
     url = "/r/worldnews/comments/#{id}"
     showmore = false
@@ -95,19 +101,11 @@ class Base
     end
   end
       
-  def morechildren
-    url = "/api/morechildren"
-    api_type = nil 
-    children = nil
-    id = nil
-    link_id = nil
-    sort = nil
-    opts = {query: {"api_type" => api_type, "children" => children, "id" => id, "link_id" => link_id, "sort" => sort}}
-    get_request url, opts
-  end
-
   # TODO pass a block here to execute a method on data
-  def get_listing_children url, after, all_links
+  def get_listing_children url, after, all_links, max=nil
+    if !max.nil? && all_links.size > max
+      return all_links
+    end
     opts = {query: {"t" => "day", "count" => "25", "after" => after}}
     response = get_request url, opts
     if response["kind"] == "Listing"
@@ -123,6 +121,7 @@ class Base
       children.each do |child|
         if child["kind"] == "t3"
           link = Link.new(child["data"])
+          require 'pry'; binding.pry
           all_links << link 
         else
           raise "Expected a link"
@@ -131,7 +130,7 @@ class Base
       if last_loop
         return all_links
       else
-        get_listing_children url, after, all_links
+        get_listing_children url, after, all_links, max
       end
     else
       raise "Expected a listing"
@@ -180,6 +179,17 @@ class Base
         puts "------------ENDCOMMENT"
       end
     end
+  end
+
+  def morechildren
+    url = "/api/morechildren"
+    api_type = nil 
+    children = nil
+    id = nil
+    link_id = nil
+    sort = nil
+    opts = {query: {"api_type" => api_type, "children" => children, "id" => id, "link_id" => link_id, "sort" => sort}}
+    get_request url, opts
   end
 
   private
