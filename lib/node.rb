@@ -70,8 +70,8 @@ class RedditTree
   attr_accessor :root
   
   NUMBER_OF_ARTICLES = 5.freeze
-  COMMENTS_LIMIT = 10.freeze
-  COMMENTS_DEPTH = 4.freeze
+  COMMENTS_LIMIT = 100.freeze
+  COMMENTS_DEPTH = 12.freeze
 
   def initialize
     @client = Base.new
