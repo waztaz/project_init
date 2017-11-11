@@ -17,6 +17,7 @@ The part underlined in red is your client secret. *You should never share this.*
 
 ### How to get the data
 
+#### Store credentials
 Once, you've gotten your credentials, create a file called `credentials.json` and store all the information in the following format
 ```
 {
@@ -27,11 +28,13 @@ Once, you've gotten your credentials, create a file called `credentials.json` an
 }
 ```
 
+#### Install dependencies
 We will now make sure, we have all the dependencies that we need. Ensure that you have bundler installed. Then execute:
 ```
 bundle install
 ```
 
+#### Execute script
 The final step is actually execute the script that runs and fetches the data for you.
 ```
 rake run
