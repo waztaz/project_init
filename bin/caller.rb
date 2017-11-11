@@ -1,5 +1,7 @@
+require 'rubygems'
+require 'bundler/setup'
 require 'json'
-require_relative 'lib/node'
+require 'node'
 
 tree = RedditTree.new
 tree_of_comments = tree.construct_structure

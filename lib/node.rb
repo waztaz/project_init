@@ -1,4 +1,4 @@
-require_relative 'base'
+require 'base'
 
 class Node
   attr_accessor :children_nodes

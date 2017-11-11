@@ -27,7 +27,12 @@ Once, you've gotten your credentials, create a file called `credentials.json` an
 }
 ```
 
+We will now make sure, we have all the dependencies that we need. Ensure that you have bundler installed. Then execute:
+```
+bundle install
+```
+
 The final step is actually execute the script that runs and fetches the data for you.
 ```
-ruby caller.rb
+rake run
 ```

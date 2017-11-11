@@ -3,8 +3,8 @@ require 'httparty'
 require 'pry'
 require 'json'
 
-require_relative 'link'
-require_relative 'comment'
+require 'link'
+require 'comment'
 
 class Base
   include HTTParty
