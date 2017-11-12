@@ -8,3 +8,4 @@ gem "rake"
 gem "json"
 gem "httparty"
 gem "pry"
+gem 'mongo', '~> 2.4'
