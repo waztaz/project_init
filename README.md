@@ -39,3 +39,8 @@ The final step is actually execute the script that runs and fetches the data for
 ```
 rake run
 ```
+
+To run sentiment analysis
+```
+rake sentiment
+```

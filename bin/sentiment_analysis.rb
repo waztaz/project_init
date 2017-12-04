@@ -14,8 +14,15 @@
 # Sentiment of a comment = sentiment of the statement * comment score
 
 require 'sentiment'
+require 'colorize'
 
 all_comments = construct_structure
-all_comments.each do |each_comment|
-  puts "#{each_comment.score}: #{each_comment.body}"
+overall_sentiment = 0
+all_comments.each do |comment|
+  # extrapolate results
+  sentiment = (comment.sentiment - 0.5) * 2
+  sentiment_aggregated = sentiment * comment.score
+  overall_sentiment += sentiment_aggregated
 end
+overall_sentiment = overall_sentiment.round(2)
+puts "Overall sentiment today: #{overall_sentiment}".green

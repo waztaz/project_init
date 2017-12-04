@@ -1,13 +1,25 @@
 require 'base'
 require 'htmlentities'
+require 'sentimentalizer'
 
-EachComment = Struct.new(:body, :score)
+EachComment = Struct.new(:body, :score, :sentiment)
+
+class Analyzer
+  def initialize
+    Sentimentalizer.setup
+  end
+
+  def process(phrase)
+    Sentimentalizer.analyze phrase
+  end
+end
 
 NUMBER_OF_ARTICLES = 5.freeze
 COMMENTS_LIMIT = 100.freeze
 COMMENTS_DEPTH = 12.freeze
 
 @html_entity = HTMLEntities.new
+@analyzer = Analyzer.new
 
 def construct_structure
   base = Base.new
@@ -32,7 +44,8 @@ def comments_tree_to_array node
   else
     comment = node.comment
     body = @html_entity.decode(comment.body)
-    all_comments << EachComment.new(body, comment.score)
+    sentiment = @analyzer.process(body).overall_probability
+    all_comments << EachComment.new(body, comment.score, sentiment)
     all_replies = node.replies
     if all_replies.nil?
       return all_comments

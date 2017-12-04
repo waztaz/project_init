@@ -9,4 +9,6 @@ gem "json"
 gem "httparty"
 gem "pry"
 gem "htmlentities"
+gem "sentimentalizer"
+gem "colorize"
 gem 'mongo', '~> 2.4'
