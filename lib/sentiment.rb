@@ -14,7 +14,7 @@ class Analyzer
   end
 end
 
-NUMBER_OF_ARTICLES = 5.freeze
+NUMBER_OF_ARTICLES = 10.freeze
 COMMENTS_LIMIT = 100.freeze
 COMMENTS_DEPTH = 12.freeze
 

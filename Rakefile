@@ -16,4 +16,10 @@ task :sentiment do
   sh "ruby -I ./lib ./bin/sentiment_analysis.rb"
 end
 
+desc 'Start storing sentiments'
+task :store_sentiments do
+  sh "ruby -I ./lib ./bin/long_running_sentiments.rb"
+end
+
+
 task :default => :run
