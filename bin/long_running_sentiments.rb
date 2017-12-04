@@ -39,7 +39,8 @@ def store_result
   sentiments_collection.insert_one({ overall_sentiment: sentiment, time: Time.now.to_i })
 end
 
+# Analyze sentiments every 10 minutes
 loop do
   store_result
-  sleep(60*30)
+  sleep(60*10)
 end
