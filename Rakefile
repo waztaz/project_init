@@ -11,4 +11,9 @@ task :store do
   sh "ruby -I ./lib ./bin/store.rb"
 end
 
+desc 'Run sentiment analysis'
+task :sentiment do
+  sh "ruby -I ./lib ./bin/sentiment_analysis.rb"
+end
+
 task :default => :run
