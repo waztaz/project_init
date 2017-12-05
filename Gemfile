@@ -12,3 +12,4 @@ gem "htmlentities"
 gem "sentimentalizer"
 gem "colorize"
 gem 'mongo', '~> 2.4'
+gem "aws-sdk"

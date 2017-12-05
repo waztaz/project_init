@@ -15,9 +15,55 @@
 
 require 'sentiment'
 require 'colorize'
-require 'mongo'
+require 'aws-sdk'
+require 'json'
+require 'SecureRandom'
 
-DATABASE_URL = ENV['DB_SENTIMENTS'] || 'mongodb://127.0.0.1:27017/test'
+CREDENTIALS_FILE = 'aws.json'.freeze
+
+def get_credentials_from_file
+  JSON.parse(File.read(CREDENTIALS_FILE))
+end
+
+@credentials = get_credentials_from_file
+
+Aws.config.update({
+  region: "us-west-2",
+  endpoint: "http://localhost:8000",
+  credentials: Aws::Credentials.new(@credentials['akid'], @credentials['secret'])
+})
+
+@dynamodb = Aws::DynamoDB::Client.new
+
+params = {
+  table_name: "Sentiments3",
+  key_schema: [
+    {
+      attribute_name: "created_on",
+      key_type: "HASH"  #Partition key
+    }
+  ],
+  attribute_definitions: [
+    {
+      attribute_name: "created_on",
+      attribute_type: "N"
+    }
+  ],
+  provisioned_throughput: {
+    read_capacity_units: 1,
+    write_capacity_units: 1
+  }
+}
+
+begin
+  result = @dynamodb.create_table(params)
+  puts "Created table. Status: " +
+    result.table_description.table_status;
+
+rescue  Aws::DynamoDB::Errors::ServiceError => error
+  puts "Unable to create table:"
+  puts "#{error.message}"
+end
 
 def get_sentiment
   all_comments = construct_structure
@@ -33,10 +79,20 @@ def get_sentiment
 end
 
 def store_result
-  db_client = Mongo::Client.new(DATABASE_URL)
-  sentiments_collection = db_client[:sentiment2]
   sentiment = get_sentiment
-  sentiments_collection.insert_one({ overall_sentiment: sentiment, time: Time.now.to_i })
+  params = {
+    table_name: 'Sentiments2',
+    item: { 
+      sentiment: sentiment,
+      created_on: Time.now.to_i
+    }
+  }
+  begin
+    result = @dynamodb.put_item(params)
+  rescue  Aws::DynamoDB::Errors::ServiceError => error
+    puts "#{error.message}"
+    exit
+  end
 end
 
 # Analyze sentiments every 10 minutes
