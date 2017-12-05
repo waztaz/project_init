@@ -17,7 +17,7 @@ require 'sentiment'
 require 'colorize'
 require 'aws-sdk'
 require 'json'
-require 'SecureRandom'
+require 'securerandom'
 
 CREDENTIALS_FILE = 'aws.json'.freeze
 
