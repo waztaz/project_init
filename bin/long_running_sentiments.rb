@@ -20,6 +20,8 @@ require 'json'
 require 'securerandom'
 
 CREDENTIALS_FILE = 'aws.json'.freeze
+TABLE_NAME = 'Sentiment4'
+WAIT_TIME = 15*60
 
 def get_credentials_from_file
   JSON.parse(File.read(CREDENTIALS_FILE))
@@ -35,34 +37,36 @@ Aws.config.update({
 
 @dynamodb = Aws::DynamoDB::Client.new
 
-params = {
-  table_name: "Sentiments3",
-  key_schema: [
-    {
-      attribute_name: "created_on",
-      key_type: "HASH"  #Partition key
+def create_table
+  params = {
+    table_name: TABLE_NAME,
+    key_schema: [
+      {
+        attribute_name: "created_on",
+        key_type: "HASH"  #Partition key
+      }
+    ],
+    attribute_definitions: [
+      {
+        attribute_name: "created_on",
+        attribute_type: "N"
+      }
+    ],
+    provisioned_throughput: {
+      read_capacity_units: 1,
+      write_capacity_units: 1
     }
-  ],
-  attribute_definitions: [
-    {
-      attribute_name: "created_on",
-      attribute_type: "N"
-    }
-  ],
-  provisioned_throughput: {
-    read_capacity_units: 1,
-    write_capacity_units: 1
   }
-}
 
-begin
-  result = @dynamodb.create_table(params)
-  puts "Created table. Status: " +
-    result.table_description.table_status;
+  begin
+    result = @dynamodb.create_table(params)
+    puts "Created table. Status: " +
+      result.table_description.table_status;
 
-rescue  Aws::DynamoDB::Errors::ServiceError => error
-  puts "Unable to create table:"
-  puts "#{error.message}"
+  rescue  Aws::DynamoDB::Errors::ServiceError => error
+    puts "Unable to create table:"
+    puts "#{error.message}"
+  end
 end
 
 def get_sentiment
@@ -81,7 +85,7 @@ end
 def store_result
   sentiment = get_sentiment
   params = {
-    table_name: 'Sentiments2',
+    table_name: TABLE_NAME,
     item: { 
       sentiment: sentiment,
       created_on: Time.now.to_i
@@ -95,8 +99,8 @@ def store_result
   end
 end
 
-# Analyze sentiments every 10 minutes
+create_table
 loop do
   store_result
-  sleep(60*10)
+  sleep(WAIT_TIME)
 end
