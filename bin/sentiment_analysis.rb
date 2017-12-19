@@ -16,6 +16,7 @@
 require 'sentiment'
 require 'colorize'
 
+start = Time.now
 all_comments = construct_structure
 overall_sentiment = 0
 all_comments.each do |comment|
@@ -27,3 +28,5 @@ end
 overall_sentiment = overall_sentiment / all_comments.length
 overall_sentiment = overall_sentiment.round(2)
 puts "Overall sentiment today: #{overall_sentiment}".green
+execution_time = Time.now - start
+puts "Overall execution time: #{execution_time.round} seconds".yellow
