@@ -17,7 +17,7 @@ require 'sentiment'
 require 'colorize'
 
 start = Time.now
-all_comments = construct_structure
+all_comments = construct_structure 'worldnews'
 overall_sentiment = 0
 all_comments.each do |comment|
   # extrapolate results

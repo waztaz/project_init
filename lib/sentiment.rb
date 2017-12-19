@@ -21,8 +21,8 @@ COMMENTS_DEPTH = 12.freeze
 @html_entity = HTMLEntities.new
 @analyzer = Analyzer.new
 
-def construct_structure
-  base = Base.new
+def construct_structure subreddit='worldnews'
+  base = Base.new subreddit
   all_comments = []
   links_array = base.top_news_today NUMBER_OF_ARTICLES
   link_ids = links_array.map { |link| link.id }

@@ -13,7 +13,8 @@ class Base
   CREDENTIALS_FILE = 'credentials.json'.freeze
   USER_AGENT = 'UneebTest/1.0 (Mac OSX)'.freeze
 
-  def initialize
+  def initialize subreddit='worldnews'
+    @subreddit = subreddit
     @credentials = get_credentials_from_file 
     # acquire the token to talk to the authenticated API
     acquire_token
@@ -44,19 +45,19 @@ class Base
   end
 
   def all_news_today
-    url = "/r/worldnews/top"
+    url = "/r/#{@subreddit}/top"
     all_news = get_listing_children url, nil, []
     all_news
   end
 
   def top_news_today n=5
-    url = "/r/worldnews/top"
+    url = "/r/#{@subreddit}/top"
     all_news = get_listing_children url, nil, [], n
     all_news[0..n-1]
   end
 
   def comment_tree id, depth=nil, limit=nil, sort="top", comment=nil
-    url = "/r/worldnews/comments/#{id}"
+    url = "/r/#{@subreddit}/comments/#{id}"
     showmore = false
     opts = {query: {
       "comment" => comment, 
@@ -137,7 +138,7 @@ class Base
   end
   
   def print_top_ten_news_today
-    allnews = get_subreddit_hot "worldnews", 10
+    allnews = get_subreddit_hot "#{@subreddit}", 10
     allnews["data"]["children"].each do |news|
       puts news["data"]["title"]
     end
